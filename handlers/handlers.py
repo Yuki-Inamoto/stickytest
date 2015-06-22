@@ -48,6 +48,7 @@ class SockHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         print('WebSocket Closed')
+        self.rooms.remove_client(self)
 
     def joinRoom(self, message):
         self.rooms.add_to_room(self, message['data'])

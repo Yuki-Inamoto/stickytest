@@ -15,6 +15,15 @@ class Rooms(object):
     def get_room_id(self, client):
         return self.clients[client]
 
+    def remove_client(self, client):
+        print(self.clients)
+        print(self.rooms)
+        room_id = self.clients[client]
+        del self.clients[client]
+        self.rooms[room_id] -= set([client])
+        print(self.clients)
+        print(self.rooms)
+
 """
 class Rooms(object):
     rooms = {}

@@ -13,7 +13,7 @@ function set_test(val)
 //var socket = io.connect();
 
 
-var socket = new WebSocket("ws://localhost:8891/3/websocket");
+var socket = new WebSocket("ws://localhost:8891/websocket");
 
 //an action has happened, send it to the
 //server
@@ -175,9 +175,8 @@ function drawNewCard(id, text, x, y, rot, colour, sticker, animationspeed) {
         ' draggable" style="-webkit-transform:rotate(' + rot +
         'deg);\
 	">\
-	<img src="static/images/icons/token/Xion.png" class="card-icon delete-card-icon" />\
-	<img class="card-image" src="static/images/' +
-        colour + '-card.png">\
+	<img src="{{ static_url('images/icons/token/')}}Xion.png" class="card-icon delete-card-icon" />\
+	<img class="card-image" src="{{static_url('images/')}}' + colour + '-card.png">\
 	<div id="content:' + id +
         '" class="content stickertarget droppable">' +
         text + '</div><span class="filler"></span>\
@@ -432,7 +431,7 @@ function drawNewColumn(columnName) {
         onblur: 'submit',
         width: '',
         height: '',
-        xindicator: '<img src="static/images/ajax-loader.gif">',
+        xindicator: '<img src="{{static_url('images/')}}ajax-loader.gif">',
         event: 'dblclick', //event: 'mouseover'
     });
 
@@ -534,7 +533,10 @@ function initColumns(columnArray) {
 
 function changeThemeTo(theme) {
     currentTheme = theme;
-    $("link[title=cardsize]").attr("href", "static/css/" + theme + ".css");
+    //$("link[title=cardsize]").attr("href", "static/css/" + theme + ".css");
+    var testTarget=document.getElementById('cardsizes');
+    testTarget.href="{{static_url('css/')}}" + theme + ".css";
+
 }
 
 
@@ -695,7 +697,7 @@ $(function() {
 
 
     if (boardInitialized === false)
-        blockUI('<img src="static/images/ajax-loader.gif" width=43 height=11/>');
+        blockUI('<img src="{{static_url('images/')}}ajax-loader.gif" width=43 height=11/>');
 
     //setTimeout($.unblockUI, 2000);
 
@@ -725,7 +727,10 @@ $(function() {
         /*else if (currentTheme == "nocards")
 		{
 			currentTheme = "bigcards";
-			$("link[title=cardsize]").attr("href", "css/bigcards.css");
+			//$("link[title=cardsize]").attr("href", "css/bigcards.css");
+			var testTarget=document.getElementById('cardsizes');
+            testTarget.href="{{static_url('css/bigcards.css')}}";
+
 		}*/
 
         sendAction('changeTheme', currentTheme);
