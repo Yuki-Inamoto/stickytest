@@ -5,11 +5,7 @@ var currentTheme = "bigcards";
 var boardInitialized = false;
 var keyTrap = null;
 
-var static_path = '';
-function set_test(val)
-{
-    static_path = val;
-}
+
 //var socket = io.connect();
 
 

@@ -18,13 +18,12 @@ class HomeHandler(tornado.web.RequestHandler):
 
 class SockHandler(tornado.websocket.WebSocketHandler):
     from .rooms import Rooms
-    waiters = set()
+    from .cards import Cards
     rooms = Rooms()
+    cards = Cards()
 
     def open(self, *args, **kwargs):
         print('WebSocket Opened')
-        SockHandler.waiters.add(self)
-        #self.rooms.add_to_room(self, room_id=args[0])
 
     def on_message(self, message):
         print('WebSocket Received')
@@ -37,14 +36,13 @@ class SockHandler(tornado.websocket.WebSocketHandler):
         elif message['action'] == 'moveCard':
             self.move_card(message)
         elif message['action'] == 'createCard':
-           self.create_card(message)
+            self.create_card(message)
         elif message['action'] == 'editCard':
             self.edit_card(message)
         elif message['action'] == 'deleteCard':
             self.delete_card(message)
         elif message['action'] == 'changeTheme':
             self.change_theme(message)
-
 
     def on_close(self):
         print('WebSocket Closed')
@@ -58,18 +56,12 @@ class SockHandler(tornado.websocket.WebSocketHandler):
         return random.randint(0, value)
 
     def initClient(self):
-        cards = []
-        card = self.createCard('/demo', 'card1', 'Hello this is fun', self.roundRand(600), self.roundRand(300), random.random() * 10 - 5, 'yellow');
-        cards.append(card)
-        self.write_message(json.dumps({'action': 'initCards', 'data': cards}))
+        room_id = self.rooms.get_room_id(self)
+        self.write_message(json.dumps({'action': 'initCards', 'data': self.cards.get_all(room_id)}))
         self.write_message(json.dumps({'action': 'initColumns', 'data': ''}))
         self.write_message(json.dumps({'action': 'changeTheme', 'data': 'bigcards'}))
         self.write_message(json.dumps({'action': 'setBoardSize', 'data': ''}))
         self.write_message(json.dumps({'action': 'initialUsers', 'data': ''}))
-
-    def createCard(self, room, id, text, x, y, rot, colour ):
-        card = {'id': id, 'colour': colour, 'rot': rot,	'x': x,	'y': y,	'text': text, 'sticker': None}
-        return card
 
     def move_card(self, message):
         message_out = {
@@ -83,16 +75,20 @@ class SockHandler(tornado.websocket.WebSocketHandler):
             }
         }
         self.broadcast_to_room(self, message_out)
+        room_id = self.rooms.get_room_id(self)
+        self.cards.update_xy(room_id, card_id=message['data']['id'], x=message['data']['position']['left'], y=message['data']['position']['top'])
 
     def create_card(self, message):
-         data = message['data']
-         clean_data = {'text': data['text'], 'id': data['id'], 'x': data['x'], 'y': data['y'],
-                       'rot': data['rot'], 'colour': data['colour']}
-         message_out = {
-             'action': 'createCard',
-             'data': clean_data
-         }
-         self.broadcast_to_room(self, message_out)
+        data = message['data']
+        clean_data = {'text': data['text'], 'id': data['id'], 'x': data['x'], 'y': data['y'],
+                      'rot': data['rot'], 'colour': data['colour'], 'sticker': None}
+        message_out = {
+            'action': 'createCard',
+            'data': clean_data
+        }
+        self.broadcast_to_room(self, message_out)
+        room_id = self.rooms.get_room_id(self)
+        self.cards.add(room_id, clean_data)
 
     def edit_card(self, message):
         clean_data = {'value': message['data']['value'], 'id': message['data']['id']}
@@ -101,6 +97,8 @@ class SockHandler(tornado.websocket.WebSocketHandler):
             'data': clean_data
         }
         self.broadcast_to_room(self, message_out)
+        room_id = self.rooms.get_room_id(self)
+        self.cards.update_text(room_id, card_id=message['data']['id'], text=message['data']['value'])
 
     def delete_card(self, message):
         clean_message = {
@@ -108,6 +106,8 @@ class SockHandler(tornado.websocket.WebSocketHandler):
             'data': {'id': message['data']['id']}
         }
         self.broadcast_to_room(self, clean_message)
+        room_id = self.rooms.get_room_id(self)
+        self.cards.delete(room_id, card_id=message['data']['id'])
 
     def change_theme(self, message):
         clean_message = {'data': message['data'], 'action': 'changeTheme'}
@@ -115,15 +115,7 @@ class SockHandler(tornado.websocket.WebSocketHandler):
 
     def broadcast_to_room(self, client, message_out):
         room_id = self.rooms.get_room_id(client)
-        print("room_id=")
-        print(room_id)
         for waiter in self.rooms.get_room_clients(room_id):
             if waiter == client:
                 continue
             waiter.write_message(json.dumps(message_out))
-        """
-        for waiter in self.waiters:
-            if waiter == client:
-                continue
-            waiter.write_message(json.dumps(message_out))
-        """
