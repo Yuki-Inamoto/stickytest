@@ -4,9 +4,9 @@ import json
 import random
 
 
-class IndexHandler(tornado.web.RequestHandler):
+class RoomHandler(tornado.web.RequestHandler):
 
-    def get(self, room_id):
+    def get(self, group_id, room_id):
         self.render('index.html', room_id=room_id)
 
 

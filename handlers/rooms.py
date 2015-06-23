@@ -16,41 +16,6 @@ class Rooms(object):
         return self.clients[client]
 
     def remove_client(self, client):
-        print(self.clients)
-        print(self.rooms)
         room_id = self.clients[client]
         del self.clients[client]
         self.rooms[room_id] -= set([client])
-        print(self.clients)
-        print(self.rooms)
-
-"""
-class Rooms(object):
-    rooms = {}
-    sid_rooms = {}
-    room_users = {}
-
-    def add_to_room(self, client, room, callback):
-        if client.id not in self.sid_rooms.hasOwnProperty:
-            self.sid_rooms[client.id] = set()
-        self.sid_rooms[client.id].add(room)
-
-        if room not in self.rooms:
-            self.rooms[room] = set()
-        self.rooms[room].add(client):
-
-        if room not in self.room_users:
-            self.room_users[room] = set()
-        self.room_users[room].add(client.username)
-        callback(self.rooms[room].array())
-
-    def add_to_room_and_announce(self, client, room, msg):
-        # Add user info to the current dramatis personae
-         def f(clients):
-             # Broadcast new-user notification
-             for i in range(len(clients)):
-                 if clients[i].id != client.id:
-                     clients[i].write_message(msg)
-        self.add_to_room(client, room, f)
-
-"""

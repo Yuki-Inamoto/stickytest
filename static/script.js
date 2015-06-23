@@ -9,7 +9,7 @@ var keyTrap = null;
 //var socket = io.connect();
 
 
-var socket = new WebSocket("ws://localhost:8891/websocket");
+var socket = new WebSocket("ws://localhost:8892/websocket");
 
 //an action has happened, send it to the
 //server
