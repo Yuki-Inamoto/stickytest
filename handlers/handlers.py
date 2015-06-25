@@ -2,12 +2,14 @@ import tornado.web
 import tornado.websocket
 import json
 import random
+import tornado.escape
+import uuid
 
 
 class RoomHandler(tornado.web.RequestHandler):
 
     def get(self, group_id, room_id):
-        self.render('index.html', room_id=room_id)
+        self.render('index.html', room_id=room_id, messages=SockHandler.cache)
 
 
 class HomeHandler(tornado.web.RequestHandler):
@@ -21,6 +23,11 @@ class SockHandler(tornado.websocket.WebSocketHandler):
     from .cards import Cards
     rooms = Rooms()
     cards = Cards()
+    cache = []
+    cache_size = 200
+    user_num = list(range(1, 100))
+    random.shuffle(user_num)
+    users = set()
 
     def open(self, *args, **kwargs):
         print('WebSocket Opened')
@@ -43,10 +50,18 @@ class SockHandler(tornado.websocket.WebSocketHandler):
             self.delete_card(message)
         elif message['action'] == 'changeTheme':
             self.change_theme(message)
+        elif message['action'] == 'chat':
+            self.chat(message)
 
     def on_close(self):
         print('WebSocket Closed')
         self.rooms.remove_client(self)
+
+    @classmethod
+    def update_cache(cls, chat):
+        cls.cache.append(chat)
+        if len(cls.cache) > cls.cache_size:
+            cls.cache = cls.cache[-cls.cache_size:]
 
     def joinRoom(self, message):
         self.rooms.add_to_room(self, message['data'])
@@ -62,6 +77,15 @@ class SockHandler(tornado.websocket.WebSocketHandler):
         self.write_message(json.dumps({'action': 'changeTheme', 'data': 'bigcards'}))
         self.write_message(json.dumps({'action': 'setBoardSize', 'data': ''}))
         self.write_message(json.dumps({'action': 'initialUsers', 'data': ''}))
+        print("cache")
+        print(self.current_user)
+        name_num = self.user_num.pop()
+        self.write_message(json.dumps({'action': 'chatMessages', 'data': {'cache': SockHandler.cache,
+                                                                          'name': "user" + str(name_num)}}))
+
+    @classmethod
+    def update_user(cls, name):
+        SockHandler.users.add(name)
 
     def move_card(self, message):
         message_out = {
@@ -115,7 +139,23 @@ class SockHandler(tornado.websocket.WebSocketHandler):
 
     def broadcast_to_room(self, client, message_out):
         room_id = self.rooms.get_room_id(client)
+        print("send:" + message_out['action'])
+        print(room_id)
         for waiter in self.rooms.get_room_clients(room_id):
             if waiter == client:
                 continue
+            print("aiueo")
             waiter.write_message(json.dumps(message_out))
+
+    def chat(self, message):
+        chat_data = dict(id=str(uuid.uuid4()), body=message['data']["body"])
+
+        chat_data["html"] = tornado.escape.to_basestring(
+            self.render_string("message.html", message=chat_data))
+        chat_data["name"] = message['data']['name']
+        print(message['data']['name'])
+        show_message = {
+            'data': chat_data, 'action': 'chat'
+        }
+        self.broadcast_to_room(self, show_message)
+        SockHandler.update_cache(chat_data)

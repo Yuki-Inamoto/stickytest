@@ -4,17 +4,81 @@ var columns = [];
 var currentTheme = "bigcards";
 var boardInitialized = false;
 var keyTrap = null;
-
+var username = {name : "default"}
 
 //var socket = io.connect();
 
+$(document).ready(function() {
 
-var socket = new WebSocket("ws://localhost:8892/websocket");
+    $("#chat_div").chatbox({id : "chat_div",
+                                  title : "chat",
+                                  user : username,
+                                  offset: 0,
+                                  messageSent: function(id, user, msg){
+                                       test_newMessage(msg, username.name);
+                                       this.boxManager.addMsg(username.name, msg);
+                                  }});
+          // to insert a message
+
+    //$("#chat_div").chatbox("option", "boxManager").addMsg("Mr. Foo", "Barrr!");
+
+
+    if (!window.console) window.console = {};
+    if (!window.console.log) window.console.log = function() {};
+
+    $(document).on('submit', '#messageform' ,function() {
+        console.log("submit")
+        newMessage($(this));
+        return false;
+    });
+    $(document).on('keypress', '#messageform' ,function(e) {
+        if (e.keyCode == 13) {
+            newMessage($(this));
+            return false;
+        }
+    });
+});
+
+function test_newMessage(msg, name) {
+
+    var data = {body: msg, name: name}
+
+   console.log("Test data "+data.toSource())
+
+    sendAction('chat', data);
+    console.log("sent chatbox");
+    console.log(data)
+}
+
+
+function newMessage(form) {
+    console.log("Form "+form.toSource())
+    var data = form.formToDict();
+    console.log("data "+data.toSource())
+
+    sendAction('chat', data);
+    form.find("input[type=text]").val("").select();
+}
+
+jQuery.fn.formToDict = function() {
+    var fields = this.serializeArray();
+    var json = {}
+    for (var i = 0; i < fields.length; i++) {
+        json[fields[i].name] = fields[i].value;
+    }
+    if (json.next) delete json.next;
+    console.log("Dict" + fields)
+
+    return json;
+};
+
+
+var socket = new WebSocket("ws://localhost:8894/websocket");
 
 //an action has happened, send it to the
 //server
 function sendAction(a, d) {
-    //console.log('--> ' + a);
+    console.log('--> ' + a);
 
     var message = {
         action: a,
@@ -76,9 +140,25 @@ function getMessage(m) {
     var action = message.action;
     var data = message.data;
 
-    //console.log('<-- ' + action);
+    console.log('on <-- ' + action);
 
     switch (action) {
+        case 'chat':
+            //showMessage(data);
+            $("#chat_div").chatbox("option", "boxManager").addMsg(data.name, data['body']);
+            console.log("chat get")
+            break;
+
+        case 'chatMessages':
+            username.name = data.name;
+            console.log("chatmessages");
+
+            for (var i = 0; i < data.cache.length; i++){
+                //console.log(data[i]);
+                //$("#chat_div").html($("#chat_div").html() + data.cache[i].body + '<br/>')
+                $("#chat_div").chatbox("option", "boxManager").addMsg(data.cache[i].name, data.cache[i].body);
+            }
+            break;
         case 'roomAccept':
             //okay we're accepted, then request initialization
             //(this is a bit of unnessary back and forth but that's okay for now)
@@ -163,6 +243,16 @@ function getMessage(m) {
 $(document).bind('keyup', function(event) {
     keyTrap = event.which;
 });
+
+function showMessage(message) {
+        var existing = $("#m" + message.id);
+        if (existing.length > 0) return;
+        var node = $(message.html);
+        console.log('showMessage');
+        node.hide();
+        $("#inbox").append(node);
+        node.slideDown();
+}
 
 function drawNewCard(id, text, x, y, rot, colour, sticker, animationspeed) {
     //cards[id] = {id: id, text: text, x: x, y: y, rot: rot, colour: colour};
@@ -306,6 +396,8 @@ function drawNewCard(id, text, x, y, rot, colour, sticker, animationspeed) {
     if (sticker !== null)
         addSticker(id, sticker);
 }
+
+
 
 
 function onCardChange(id, text) {
@@ -851,3 +943,4 @@ $(function() {
 
 
 });
+

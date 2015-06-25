@@ -4,7 +4,8 @@
 
 <!--div.config-->
 <!--	i.fa.fa-cog.fa-lg.faded-icon-->
-<h1><a href="http://scrumblr.ca">scrumblr</a> by <a href="http://aliasaria.ca">aliasaria</a></h1>
+
+
 <div class="board-outline">
   <div id="board">
     <div id="board-doodles"></div>
@@ -49,7 +50,42 @@
   <input id="yourname-input"/><span class="you-text">(you)</span>
   <ul id="names-ul"></ul>
 </div>
+<!--
+<div id = "chat">
+  <div id ="inbox">
+    {% for message in messages %}
+          {% include "message.html" %}
+    {% end %}
+  </div>
+  <div id="input">
+ <form action="/a/message/new" method="post" id="messageform">
+ <table>
+            <tr>
+              <td><input name="body" id="message" style="width:150px"/></td>
+              <td style="padding-left:5px">
+                <input type="submit" value="{{ _("Post") }}"/>
+                <input type="hidden" name="next" value="{{ request.path }}"/>
+                {% module xsrf_form_html() %}
+              </td>
+            </tr>
+          </table>
+ </form>
+</div>
+</div>
+-->
+<!--<input type="button"  name="toggle" value="toggle" />-->
 
+<div id="chat_div" class="chat">
+</div>
+<div class="chat"><div>
+<div class="left">表示させたい要素を記述</div>
+<p><a href="#" class="btn" id="A">クリック！</p>
+
+<script>
+        $(".btn").on("click", function() {
+           $("#chat_div").chatbox("toggleContent");
+        });
+</script>
 
 <!--div.trash-->
 <!--	i.fa.fa-trash-o.fa-lg.faded-icon-->
